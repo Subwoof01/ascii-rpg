@@ -7,7 +7,8 @@ use crate::{
 pub struct CameraSystem {}
 impl CameraSystem {
     pub fn execute(world_width: u16, world_height: u16) -> anyhow::Result<()> {
-        WORLD.with_borrow(|world| {
+        // TODO: Have the camera be an entity so it can be serialised?
+        WORLD.with_borrow(|world| -> anyhow::Result<()> {
             // Find player to center the camera on.
             let player = world
                 .query::<(&Player, &Position)>()
@@ -17,6 +18,7 @@ impl CameraSystem {
             if player.len() == 0 {
                 eprintln!("Player not found! This shouldn't be able to happen...");
                 kill();
+                return Ok(());
             }
             let pos = player[0];
             // Clip camera to world bounds.
@@ -34,7 +36,7 @@ impl CameraSystem {
                 }
                 *cam_pos = new_cam_pos;
             });
-        });
-        Ok(())
+            Ok(())
+        })
     }
 }

@@ -16,7 +16,7 @@ pub struct InputSystem {}
 impl InputSystem {
     pub fn execute() -> anyhow::Result<()> {
         // `poll()` waits for an `Event` for a given time period
-        if !poll(Duration::from_millis(100))? {
+        if !poll(Duration::from_millis(1))? {
             return Ok(());
         }
         // It's guaranteed that the `read()` won't block when the `poll()`
