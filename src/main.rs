@@ -13,12 +13,13 @@ use hecs::World;
 
 use crate::{
     components::{
-        draw::Drawable,
+        draw::{Colour, Drawable},
         generic::Position,
         player::Player,
         tiles::{BlocksMovement, BlocksVision},
     },
     systems::{
+        camera::CameraSystem,
         draw::DrawSystem,
         input::InputSystem,
         movement::MovementSystem,
@@ -26,13 +27,16 @@ use crate::{
     },
 };
 
+const MAP_WIDTH: u16 = 64;
+const MAP_HEIGHT: u16 = 32;
+const CAMERA_WIDTH: u16 = 32;
+const CAMERA_HEIGHT: u16 = 16;
+
 thread_local! {
     static WORLD: RefCell<World> = RefCell::new(World::new());
+    static CAMERA_POSITION: RefCell<Position> = RefCell::new(Position::new(MAP_WIDTH / 2, MAP_HEIGHT / 2));
 }
 static RUNNING: AtomicBool = AtomicBool::new(true);
-
-const MAP_WIDTH: u16 = 32;
-const MAP_HEIGHT: u16 = 16;
 
 fn main() -> anyhow::Result<()> {
     ctrlc::set_handler(move || {
@@ -52,10 +56,11 @@ fn main() -> anyhow::Result<()> {
                         Player {},
                     ));
                 }
-                if x == 0 || x == MAP_WIDTH || y == 0 || y == MAP_HEIGHT || (x == 4 && y == 4) {
+                if x == 0 || x == MAP_WIDTH || y == 0 || y == MAP_HEIGHT {
                     world.spawn((
                         Drawable {
-                            char: '#',
+                            char: '█',
+                            fg: Colour::new(255, 255, 255),
                             ..Default::default()
                         },
                         Position::new(x, y),
@@ -90,7 +95,8 @@ fn main() -> anyhow::Result<()> {
     while RUNNING.load(Ordering::SeqCst) {
         InputSystem::execute()?;
         MovementSystem::execute(MAP_WIDTH, MAP_HEIGHT)?;
-        DrawSystem::execute()?;
+        CameraSystem::execute(MAP_WIDTH, MAP_HEIGHT)?;
+        DrawSystem::execute(CAMERA_WIDTH, CAMERA_HEIGHT)?;
         sleep(Duration::from_millis(16));
     }
 

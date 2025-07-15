@@ -1,10 +1,11 @@
 use std::iter;
 
 use crate::{
-    WORLD,
+    CAMERA_HEIGHT, CAMERA_POSITION, CAMERA_WIDTH, WORLD,
     components::{
         generic::Position,
         movement::{Move, MoveDirection},
+        player::Player,
         tiles::BlocksMovement,
     },
 };

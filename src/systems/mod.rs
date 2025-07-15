@@ -2,6 +2,7 @@ use hecs::Entity;
 
 use crate::{WORLD, components::player::Player};
 
+pub mod camera;
 pub mod draw;
 pub mod input;
 pub mod movement;
