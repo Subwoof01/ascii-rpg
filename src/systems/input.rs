@@ -27,7 +27,7 @@ impl InputSystem {
                 KeyCode::Char('q') => {
                     kill();
                 }
-                KeyCode::Up => {
+                KeyCode::Up | KeyCode::Char('k') => {
                     if let Some(player) = get_player_entity() {
                         WORLD.with_borrow_mut(|world| {
                             world
@@ -41,7 +41,7 @@ impl InputSystem {
                         });
                     }
                 }
-                KeyCode::Down => {
+                KeyCode::Down | KeyCode::Char('j') => {
                     if let Some(player) = get_player_entity() {
                         WORLD.with_borrow_mut(|world| {
                             world
@@ -55,7 +55,7 @@ impl InputSystem {
                         });
                     }
                 }
-                KeyCode::Left => {
+                KeyCode::Left | KeyCode::Char('h') => {
                     if let Some(player) = get_player_entity() {
                         WORLD.with_borrow_mut(|world| {
                             world
@@ -69,7 +69,7 @@ impl InputSystem {
                         });
                     }
                 }
-                KeyCode::Right => {
+                KeyCode::Right | KeyCode::Char('l') => {
                     if let Some(player) = get_player_entity() {
                         WORLD.with_borrow_mut(|world| {
                             world

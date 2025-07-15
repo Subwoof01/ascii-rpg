@@ -6,7 +6,7 @@ use std::{
 };
 
 use hecs::{
-    Archetype, ColumnBatchBuilder, ColumnBatchType, Entity, World,
+    Archetype, ColumnBatchBuilder, ColumnBatchType, World,
     serialize::column::{
         DeserializeContext, SerializeContext, deserialize_column, try_serialize, try_serialize_id,
     },
@@ -15,7 +15,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     WORLD,
-    components::{draw::Drawable, generic::Position},
+    components::{
+        draw::Drawable,
+        generic::Position,
+        player::Player,
+        tiles::{BlocksMovement, BlocksVision},
+    },
 };
 
 #[allow(dead_code)]
@@ -60,6 +65,9 @@ enum ComponentId {
     // TODO: Add components that need to be serialised here
     Drawable,
     Position,
+    Player,
+    BlocksMovement,
+    BlocksVision,
 }
 
 // We need to implement context types for the hecs serialization process:
@@ -86,6 +94,15 @@ impl DeserializeContext for SaveContextDeserialize {
                 ComponentId::Position => {
                     batch.add::<Position>();
                 }
+                ComponentId::Player => {
+                    batch.add::<Player>();
+                }
+                ComponentId::BlocksMovement => {
+                    batch.add::<BlocksMovement>();
+                }
+                ComponentId::BlocksVision => {
+                    batch.add::<BlocksVision>();
+                }
             }
             self.components.push(id);
         }
@@ -111,6 +128,15 @@ impl DeserializeContext for SaveContextDeserialize {
                 ComponentId::Position => {
                     deserialize_column::<Position, _>(entity_count, &mut seq, batch)?;
                 }
+                ComponentId::Player => {
+                    deserialize_column::<Player, _>(entity_count, &mut seq, batch)?;
+                }
+                ComponentId::BlocksMovement => {
+                    deserialize_column::<BlocksMovement, _>(entity_count, &mut seq, batch)?;
+                }
+                ComponentId::BlocksVision => {
+                    deserialize_column::<BlocksVision, _>(entity_count, &mut seq, batch)?;
+                }
             }
         }
         Ok(())
@@ -121,7 +147,14 @@ impl SerializeContext for SaveContextSerialize {
     fn component_count(&self, archetype: &Archetype) -> usize {
         archetype
             .component_types()
-            .filter(|&t| t == TypeId::of::<Drawable>() || t == TypeId::of::<Position>())
+            // TODO: Add components that need to be serialised here
+            .filter(|&t| {
+                t == TypeId::of::<Drawable>()
+                    || t == TypeId::of::<Position>()
+                    || t == TypeId::of::<Player>()
+                    || t == TypeId::of::<BlocksMovement>()
+                    || t == TypeId::of::<BlocksVision>()
+            })
             .count()
     }
 
@@ -133,6 +166,13 @@ impl SerializeContext for SaveContextSerialize {
         // TODO: Add components that need to be serialised here
         try_serialize_id::<Drawable, _, _>(archetype, &ComponentId::Drawable, &mut out)?;
         try_serialize_id::<Position, _, _>(archetype, &ComponentId::Position, &mut out)?;
+        try_serialize_id::<Player, _, _>(archetype, &ComponentId::Player, &mut out)?;
+        try_serialize_id::<BlocksMovement, _, _>(
+            archetype,
+            &ComponentId::BlocksMovement,
+            &mut out,
+        )?;
+        try_serialize_id::<BlocksVision, _, _>(archetype, &ComponentId::BlocksVision, &mut out)?;
         out.end()
     }
 
@@ -144,6 +184,9 @@ impl SerializeContext for SaveContextSerialize {
         // TODO: Add components that need to be serialised here
         try_serialize::<Drawable, _>(archetype, &mut out)?;
         try_serialize::<Position, _>(archetype, &mut out)?;
+        try_serialize::<Player, _>(archetype, &mut out)?;
+        try_serialize::<BlocksMovement, _>(archetype, &mut out)?;
+        try_serialize::<BlocksVision, _>(archetype, &mut out)?;
         out.end()
     }
 }
