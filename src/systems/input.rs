@@ -2,7 +2,15 @@ use std::time::Duration;
 
 use crossterm::event::{Event, KeyCode, poll, read};
 
-use crate::kill;
+use crate::{
+    WORLD,
+    components::{
+        movement::{Move, MoveDirection},
+        player::Player,
+    },
+    kill,
+    systems::get_player_entity,
+};
 
 pub struct InputSystem {}
 impl InputSystem {
@@ -18,6 +26,62 @@ impl InputSystem {
             match key_event.code {
                 KeyCode::Char('q') => {
                     kill();
+                }
+                KeyCode::Up => {
+                    if let Some(player) = get_player_entity() {
+                        WORLD.with_borrow_mut(|world| {
+                            world
+                                .insert(
+                                    player,
+                                    (Move {
+                                        dir: MoveDirection::Up,
+                                    },),
+                                )
+                                .unwrap();
+                        });
+                    }
+                }
+                KeyCode::Down => {
+                    if let Some(player) = get_player_entity() {
+                        WORLD.with_borrow_mut(|world| {
+                            world
+                                .insert(
+                                    player,
+                                    (Move {
+                                        dir: MoveDirection::Down,
+                                    },),
+                                )
+                                .unwrap();
+                        });
+                    }
+                }
+                KeyCode::Left => {
+                    if let Some(player) = get_player_entity() {
+                        WORLD.with_borrow_mut(|world| {
+                            world
+                                .insert(
+                                    player,
+                                    (Move {
+                                        dir: MoveDirection::Left,
+                                    },),
+                                )
+                                .unwrap();
+                        });
+                    }
+                }
+                KeyCode::Right => {
+                    if let Some(player) = get_player_entity() {
+                        WORLD.with_borrow_mut(|world| {
+                            world
+                                .insert(
+                                    player,
+                                    (Move {
+                                        dir: MoveDirection::Right,
+                                    },),
+                                )
+                                .unwrap();
+                        });
+                    }
                 }
                 _ => {}
             }

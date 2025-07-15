@@ -5,7 +5,9 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
-bitcode = "0.6.6"
+bincode = { version = "1.3.3" }
 crossterm = "0.29.0"
 ctrlc = { version = "3.4.7", features = ["termination"] }
-hecs = "0.10.5"
+hecs = { version = "0.10.5", features = ["column-serialize", "row-serialize"] }
+rand = "0.9.1"
+serde = { version = "1.0.219", features = ["derive"] }
