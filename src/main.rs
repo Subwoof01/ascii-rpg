@@ -1,5 +1,6 @@
 mod components;
 mod systems;
+mod worldgen;
 
 use std::{
     cell::RefCell,
@@ -28,6 +29,7 @@ use crate::{
         movement::MovementSystem,
         save_load::{load_from_file, save_to_file},
     },
+    worldgen::{GenerationStrategy, bsp::BinarySpacePartitionStrategy},
 };
 
 const MAP_WIDTH: u16 = 64;
@@ -49,47 +51,55 @@ fn main() -> anyhow::Result<()> {
         kill();
     })?;
 
+    let mut bsp = BinarySpacePartitionStrategy::new(0, 0, 64, 32);
+    bsp.split_space();
+    bsp.split_space();
     WORLD.with_borrow_mut(|world| {
-        for x in 0..=MAP_WIDTH {
-            for y in 0..=MAP_HEIGHT {
-                if x == MAP_WIDTH / 2 && y == MAP_HEIGHT / 2 {
-                    world.spawn((
-                        Drawable {
-                            char: '@',
-                            ..Default::default()
-                        },
-                        Position::new(x, y),
-                        Player {},
-                    ));
-                }
-                if x == 0 || x == MAP_WIDTH || y == 0 || y == MAP_HEIGHT {
-                    world.spawn((
-                        Drawable {
-                            char: '█',
-                            fg: Colour::new(255, 255, 255),
-                            ..Default::default()
-                        },
-                        Position::new(x, y),
-                        BlocksMovement {},
-                        BlocksVision {},
-                    ));
-                } else {
-                    world.spawn((
-                        Drawable {
-                            char: '.',
-                            ..Default::default()
-                        },
-                        Position::new(x, y),
-                    ));
-                }
-            }
-        }
-        world.spawn((
-            Camera {},
-            Position::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
-            Size::new(CAMERA_WIDTH, CAMERA_HEIGHT),
-        ));
+        *world = bsp.finish();
+        world.spawn((Player {}, Position::default()));
     });
+
+    // WORLD.with_borrow_mut(|world| {
+    //     for x in 0..=MAP_WIDTH {
+    //         for y in 0..=MAP_HEIGHT {
+    //             if x == MAP_WIDTH / 2 && y == MAP_HEIGHT / 2 {
+    //                 world.spawn((
+    //                     Drawable {
+    //                         char: '@',
+    //                         ..Default::default()
+    //                     },
+    //                     Position::new(x, y),
+    //                     Player {},
+    //                 ));
+    //             }
+    //             if x == 0 || x == MAP_WIDTH || y == 0 || y == MAP_HEIGHT {
+    //                 world.spawn((
+    //                     Drawable {
+    //                         char: '█',
+    //                         fg: Colour::new(255, 255, 255),
+    //                         ..Default::default()
+    //                     },
+    //                     Position::new(x, y),
+    //                     BlocksMovement {},
+    //                     BlocksVision {},
+    //                 ));
+    //             } else {
+    //                 world.spawn((
+    //                     Drawable {
+    //                         char: '.',
+    //                         ..Default::default()
+    //                     },
+    //                     Position::new(x, y),
+    //                 ));
+    //             }
+    //         }
+    //     }
+    //     world.spawn((
+    //         Camera {},
+    //         Position::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
+    //         Size::new(CAMERA_WIDTH, CAMERA_HEIGHT),
+    //     ));
+    // });
 
     // WORLD.with_borrow_mut(|world| {
     //     *world = match load_from_file() {

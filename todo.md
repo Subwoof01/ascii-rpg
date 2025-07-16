@@ -1,0 +1,8 @@
+- Refactor the map to be an array of tiles instead.
+    - Only use the ECS for actual entities, not map tiles.
+    - Requires a refactor of the draw and camera systems.
+    - Should allow for easier collision checking against walls.
+        - Should also reduce the amount of loops in ECS collision checking against other entities.
+    - Because the World should be serializable, if we add the World to an overarching Game struct it should be fully serializable through bincode. (Hopefully it won't break the saving system).
+- Make player (and camera) always be in the center of the terminal.
+- Can yoink some stuff from here: https://bfnightly.bracketproductions.com/ 
