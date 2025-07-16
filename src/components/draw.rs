@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::components::generic::{Position, Size};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Colour {
     r: u8,
     g: u8,

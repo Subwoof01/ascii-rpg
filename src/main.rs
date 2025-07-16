@@ -15,8 +15,9 @@ use hecs::World;
 
 use crate::{
     components::{
+        camera::Camera,
         draw::{Colour, Drawable},
-        generic::Position,
+        generic::{Position, Size},
         player::Player,
         tiles::{BlocksMovement, BlocksVision},
     },
@@ -35,6 +36,7 @@ const CAMERA_WIDTH: u16 = 32;
 const CAMERA_HEIGHT: u16 = 16;
 const DRAW_FPS: u64 = 25;
 const PROCESS_FPS: u64 = 300;
+const SHOW_FPS: bool = false;
 
 thread_local! {
     static WORLD: RefCell<World> = RefCell::new(World::new());
@@ -82,11 +84,21 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
+        world.spawn((
+            Camera {},
+            Position::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
+            Size::new(CAMERA_WIDTH, CAMERA_HEIGHT),
+        ));
     });
 
     // WORLD.with_borrow_mut(|world| {
     //     *world = match load_from_file() {
-    //         Ok(w) => w,
+    //         Ok(w) => {
+    //             for entity in w.iter() {
+    //                 println!("{:?}", entity.entity());
+    //             }
+    //             w
+    //         }
     //         Err(e) => {
     //             eprintln!("Something went wrong while trying to load the world: {e}");
     //             exit(1);
@@ -107,12 +119,12 @@ fn main() -> anyhow::Result<()> {
         if Instant::now().duration_since(last_draw_time)
             >= Duration::from_micros(1_000_000 / DRAW_FPS)
         {
-            DrawSystem::execute(CAMERA_WIDTH, CAMERA_HEIGHT)?;
+            DrawSystem::execute()?;
             frames_drawn += 1;
             last_draw_time = Instant::now();
         }
         frames_processed += 1;
-        if Instant::now().duration_since(last_time) >= Duration::from_secs(1) {
+        if Instant::now().duration_since(last_time) >= Duration::from_secs(1) && SHOW_FPS {
             last_time = Instant::now();
             let size = crossterm::terminal::size()?;
             let to_print_proc = format!("Process FPS: {frames_processed}");

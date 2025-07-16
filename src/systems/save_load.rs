@@ -16,8 +16,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     WORLD,
     components::{
+        camera::Camera,
         draw::Drawable,
-        generic::Position,
+        generic::{Position, Size},
         player::Player,
         tiles::{BlocksMovement, BlocksVision},
     },
@@ -38,8 +39,8 @@ pub fn save_to_file() -> anyhow::Result<()> {
     });
     let path = Path::new("./save.world");
     let mut file = match File::create(path) {
-        Err(why) => panic!("couldn't create {}: {}", path.display(), why),
         Ok(file) => file,
+        Err(why) => panic!("couldn't create {}: {}", path.display(), why),
     };
     file.write_all(&buffer)
         .unwrap_or_else(|_| panic!("Failed to write file: ./save.world"));
@@ -56,6 +57,7 @@ pub fn load_from_file() -> anyhow::Result<World, Box<bincode::ErrorKind>> {
     let reader = BufReader::new(open);
     let options = bincode::options();
     let mut deserializer = bincode::Deserializer::with_reader(reader, options);
+    println!("Load");
     hecs::serialize::column::deserialize(&mut SaveContextDeserialize::default(), &mut deserializer)
 }
 
@@ -65,9 +67,11 @@ enum ComponentId {
     // TODO: Add components that need to be serialised here
     Drawable,
     Position,
+    Size,
     Player,
     BlocksMovement,
     BlocksVision,
+    Camera,
 }
 
 // We need to implement context types for the hecs serialization process:
@@ -94,6 +98,9 @@ impl DeserializeContext for SaveContextDeserialize {
                 ComponentId::Position => {
                     batch.add::<Position>();
                 }
+                ComponentId::Size => {
+                    batch.add::<Size>();
+                }
                 ComponentId::Player => {
                     batch.add::<Player>();
                 }
@@ -102,6 +109,9 @@ impl DeserializeContext for SaveContextDeserialize {
                 }
                 ComponentId::BlocksVision => {
                     batch.add::<BlocksVision>();
+                }
+                ComponentId::Camera => {
+                    batch.add::<Camera>();
                 }
             }
             self.components.push(id);
@@ -128,6 +138,9 @@ impl DeserializeContext for SaveContextDeserialize {
                 ComponentId::Position => {
                     deserialize_column::<Position, _>(entity_count, &mut seq, batch)?;
                 }
+                ComponentId::Size => {
+                    deserialize_column::<Size, _>(entity_count, &mut seq, batch)?;
+                }
                 ComponentId::Player => {
                     deserialize_column::<Player, _>(entity_count, &mut seq, batch)?;
                 }
@@ -136,6 +149,9 @@ impl DeserializeContext for SaveContextDeserialize {
                 }
                 ComponentId::BlocksVision => {
                     deserialize_column::<BlocksVision, _>(entity_count, &mut seq, batch)?;
+                }
+                ComponentId::Camera => {
+                    deserialize_column::<Camera, _>(entity_count, &mut seq, batch)?;
                 }
             }
         }
@@ -151,9 +167,11 @@ impl SerializeContext for SaveContextSerialize {
             .filter(|&t| {
                 t == TypeId::of::<Drawable>()
                     || t == TypeId::of::<Position>()
+                    || t == TypeId::of::<Size>()
                     || t == TypeId::of::<Player>()
                     || t == TypeId::of::<BlocksMovement>()
                     || t == TypeId::of::<BlocksVision>()
+                    || t == TypeId::of::<Camera>()
             })
             .count()
     }
@@ -166,6 +184,7 @@ impl SerializeContext for SaveContextSerialize {
         // TODO: Add components that need to be serialised here
         try_serialize_id::<Drawable, _, _>(archetype, &ComponentId::Drawable, &mut out)?;
         try_serialize_id::<Position, _, _>(archetype, &ComponentId::Position, &mut out)?;
+        try_serialize_id::<Size, _, _>(archetype, &ComponentId::Size, &mut out)?;
         try_serialize_id::<Player, _, _>(archetype, &ComponentId::Player, &mut out)?;
         try_serialize_id::<BlocksMovement, _, _>(
             archetype,
@@ -173,6 +192,7 @@ impl SerializeContext for SaveContextSerialize {
             &mut out,
         )?;
         try_serialize_id::<BlocksVision, _, _>(archetype, &ComponentId::BlocksVision, &mut out)?;
+        try_serialize_id::<Camera, _, _>(archetype, &ComponentId::Camera, &mut out)?;
         out.end()
     }
 
@@ -184,9 +204,11 @@ impl SerializeContext for SaveContextSerialize {
         // TODO: Add components that need to be serialised here
         try_serialize::<Drawable, _>(archetype, &mut out)?;
         try_serialize::<Position, _>(archetype, &mut out)?;
+        try_serialize::<Size, _>(archetype, &mut out)?;
         try_serialize::<Player, _>(archetype, &mut out)?;
         try_serialize::<BlocksMovement, _>(archetype, &mut out)?;
         try_serialize::<BlocksVision, _>(archetype, &mut out)?;
+        try_serialize::<Camera, _>(archetype, &mut out)?;
         out.end()
     }
 }
