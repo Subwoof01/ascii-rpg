@@ -4,10 +4,7 @@ use crossterm::event::{Event, KeyCode, poll, read};
 
 use crate::{
     WORLD,
-    components::{
-        movement::{Move, MoveDirection},
-        player::Player,
-    },
+    components::movement::{Move, MoveDirection},
     kill,
     systems::get_player_entity,
 };

@@ -13,7 +13,7 @@ use crossterm::{
 };
 
 use crate::{
-    CAMERA_POSITION, WORLD,
+    CAMERA_POSITION, MAP, MAP_HEIGHT, MAP_WIDTH, TileType, WORLD,
     components::{
         camera::Camera,
         draw::Drawable,
@@ -23,6 +23,26 @@ use crate::{
 
 pub struct DrawSystem {}
 impl DrawSystem {
+    pub fn draw_map() -> anyhow::Result<()> {
+        MAP.with_borrow_mut(|map| -> anyhow::Result<()> {
+            for i in 0..(MAP_WIDTH * MAP_HEIGHT) {
+                let (x, y) = map.get_xy_on_map(i);
+                let tile = map.get_tile_by_xy(x, y);
+                stdout().queue(MoveTo(x, y))?;
+                match tile {
+                    TileType::Floor => {
+                        stdout().queue(Print("."))?;
+                    }
+                    TileType::Wall => {
+                        stdout().queue(Print("#"))?;
+                    }
+                }
+            }
+            stdout().flush()?;
+            Ok(())
+        })
+    }
+
     pub fn execute() -> anyhow::Result<()> {
         WORLD.with_borrow_mut(|world| -> anyhow::Result<()> {
             // Use these defaults so if there's no camera present, we just render everything.

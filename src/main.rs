@@ -43,21 +43,69 @@ const SHOW_FPS: bool = false;
 thread_local! {
     static WORLD: RefCell<World> = RefCell::new(World::new());
     static CAMERA_POSITION: RefCell<Position> = RefCell::new(Position::new(MAP_WIDTH / 2, MAP_HEIGHT / 2));
+    static MAP: RefCell<Map> = RefCell::new(Map { map: [TileType::Floor; MAP_WIDTH as usize * MAP_HEIGHT as usize] });
 }
 static RUNNING: AtomicBool = AtomicBool::new(true);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TileType {
+    Wall,
+    Floor,
+}
+
+pub struct Map {
+    pub map: [TileType; MAP_WIDTH as usize * MAP_HEIGHT as usize],
+}
+impl Map {
+    pub fn get_xy_on_map(&self, index: u16) -> (u16, u16) {
+        let x = index - (MAP_WIDTH * (index / MAP_WIDTH));
+        let y = index / MAP_WIDTH;
+
+        (x, y)
+    }
+
+    fn calculate_index(&self, x: u16, y: u16) -> usize {
+        let index = x + y * MAP_WIDTH;
+        index as usize
+    }
+
+    pub fn get_tile_by_xy(&self, x: u16, y: u16) -> TileType {
+        self.map[self.calculate_index(x, y)]
+    }
+
+    pub fn get_tile_by_xy_borrow(&self, x: u16, y: u16) -> &TileType {
+        &self.map[self.calculate_index(x, y)]
+    }
+
+    pub fn set_tile_by_xy(&mut self, tile: TileType, x: u16, y: u16) {
+        self.map[self.calculate_index(x, y)] = tile;
+    }
+}
 
 fn main() -> anyhow::Result<()> {
     ctrlc::set_handler(move || {
         kill();
     })?;
 
-    let mut bsp = BinarySpacePartitionStrategy::new(0, 0, 64, 32);
-    bsp.split_space();
-    bsp.split_space();
-    WORLD.with_borrow_mut(|world| {
-        *world = bsp.finish();
-        world.spawn((Player {}, Position::default()));
-    });
+    MAP.with_borrow_mut(|map| -> anyhow::Result<()> {
+        for x in 0..MAP_WIDTH {
+            map.set_tile_by_xy(TileType::Wall, x, 0);
+            map.set_tile_by_xy(TileType::Wall, x, MAP_HEIGHT - 1);
+        }
+        for y in 0..MAP_HEIGHT {
+            map.set_tile_by_xy(TileType::Wall, 0, y);
+            map.set_tile_by_xy(TileType::Wall, MAP_WIDTH - 1, y);
+        }
+        Ok(())
+    })?;
+
+    // let mut bsp = BinarySpacePartitionStrategy::new(0, 0, 64, 32);
+    // bsp.split_space();
+    // bsp.split_space();
+    // WORLD.with_borrow_mut(|world| {
+    //     *world = bsp.finish();
+    //     world.spawn((Player {}, Position::default()));
+    // });
 
     // WORLD.with_borrow_mut(|world| {
     //     for x in 0..=MAP_WIDTH {
@@ -101,6 +149,17 @@ fn main() -> anyhow::Result<()> {
     //     ));
     // });
 
+    WORLD.with_borrow_mut(|world| {
+        world.spawn((
+            Drawable {
+                char: '@',
+                ..Default::default()
+            },
+            Position::new(4, 4),
+            Player {},
+        ));
+    });
+
     // WORLD.with_borrow_mut(|world| {
     //     *world = match load_from_file() {
     //         Ok(w) => {
@@ -129,6 +188,7 @@ fn main() -> anyhow::Result<()> {
         if Instant::now().duration_since(last_draw_time)
             >= Duration::from_micros(1_000_000 / DRAW_FPS)
         {
+            DrawSystem::draw_map()?;
             DrawSystem::execute()?;
             frames_drawn += 1;
             last_draw_time = Instant::now();
